@@ -2,7 +2,7 @@ const elasticsearch = require('elasticsearch')
 
 // Core ES variables for this project
 const index = 'library'
-const type = 'novel'
+const type = 'book'
 const port = 9200
 const host = process.env.ES_HOST || 'localhost'
 const client = new elasticsearch.Client({ host: { host, port } })
@@ -22,9 +22,7 @@ async function checkConnection () {
   }
 }
 
-// checkConnection()
-
-// /** Clear the index, recreate it, and add mappings */
+/** Clear the index, recreate it, and add mappings */
 async function resetIndex () {
   if (await client.indices.exists({ index })) {
     await client.indices.delete({ index })

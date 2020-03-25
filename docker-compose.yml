@@ -20,7 +20,7 @@ services:
     volumes: # Serve local "public" dir
       - ./public:/usr/share/nginx/html
     ports:
-      - "80:80" # Forward site to localhost:8080
+      - "8080:80" # Forward site to localhost:8080
 
   elasticsearch: # Elasticsearch Instance
     container_name: gs-search
@@ -31,9 +31,9 @@ services:
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - discovery.type=single-node
-    ports: # Expose Elasticsearch ports
+    ports: # Expose ElasticSearch ports
       - "9300:9300"
       - "9200:9200"
 
-volumes: # Define seperate volume for Elasticsearch data
+volumes:
   esdata:

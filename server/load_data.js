@@ -2,29 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const esConnection = require('./connection')
 
-/** Clear ES index, parse and index all files from the books directory */
-async function readAndInsertBooks () {
-  try {
-    // Clear previous ES index
-    await esConnection.resetIndex()
-
-    // Read books directory
-    let files = fs.readdirSync('./books').filter(file => file.slice(-4) === '.txt')
-    console.log(`Found ${files.length} Files`)
-
-    // Read each book file, and index each paragraph in elasticsearch
-    for (let file of files) {
-      console.log(`Reading File - ${file}`)
-      const filePath = path.join('./books', file)
-      const { title, author, paragraphs } = parseBookFile(filePath)
-      await insertBookData(title, author, paragraphs)
-    }
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-/** Read an individual book text file, and extract the title, author, and paragraphs */
+/** Read an individual book txt file, and extract the title, author, and paragraphs */
 function parseBookFile (filePath) {
   // Read text file
   const book = fs.readFileSync(filePath, 'utf8')
@@ -53,7 +31,7 @@ function parseBookFile (filePath) {
   return { title, author, paragraphs }
 }
 
-/** Bulk index the book data in Elasticsearch */
+/** Bulk index the book data in ElasticSearch */
 async function insertBookData (title, author, paragraphs) {
   let bulkOps = [] // Array to store bulk operations
 
@@ -70,7 +48,7 @@ async function insertBookData (title, author, paragraphs) {
       text: paragraphs[i]
     })
 
-    if (i > 0 && i % 500 === 0) { // Do bulk insert in 500 paragraph batches
+    if (i > 0 && i % 500 === 0) { // Do bulk insert after every 500 paragraphs
       await esConnection.client.bulk({ body: bulkOps })
       bulkOps = []
       console.log(`Indexed Paragraphs ${i - 499} - ${i}`)
@@ -80,6 +58,30 @@ async function insertBookData (title, author, paragraphs) {
   // Insert remainder of bulk ops array
   await esConnection.client.bulk({ body: bulkOps })
   console.log(`Indexed Paragraphs ${paragraphs.length - (bulkOps.length / 2)} - ${paragraphs.length}\n\n\n`)
+}
+
+/** Clear ES index, parse and index all files from the books directory */
+async function readAndInsertBooks () {
+  await esConnection.checkConnection()
+
+  try {
+    // Clear previous ES index
+    await esConnection.resetIndex()
+
+    // Read books directory
+    let files = fs.readdirSync('./books').filter(file => file.slice(-4) === '.txt')
+    console.log(`Found ${files.length} Files`)
+
+    // Read each book file, and index each paragraph in elasticsearch
+    for (let file of files) {
+      console.log(`Reading File - ${file}`)
+      const filePath = path.join('./books', file)
+      const { title, author, paragraphs } = parseBookFile(filePath)
+      await insertBookData(title, author, paragraphs)
+    }
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 readAndInsertBooks()
